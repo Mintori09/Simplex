@@ -62,27 +62,56 @@ int main(int argc, char *argv[]){
 } 
 void nl(int k){ int j; for(j=0;j<k;j++) putchar('-'); putchar('\n'); }
 void print_tableau(Tableau *tab, const char* mes) {
-  static int counter=0;
-  int i, j;
-  printf("\n%d. Tableau %s:\n", ++counter, mes);
-  nl(70);
+    static int counter = 0;
+    int i, j;
 
-  printf("%-6s%5s", "col:", "b[i]");
-  for(j=1;j<tab->n; j++) { printf("    x%d,", j); } printf("\n");
-
-  for(i=0;i<tab->m; i++) {
-    if (i==0) printf("max:"); else
-    printf("b%d: ", i);
-    for(j=0;j<tab->n; j++) {
-      if (equal((int)tab->linear[i][j], tab->linear[i][j]))
-        printf(" %6d", (int)tab->linear[i][j]);
-      else
-        printf(" %6.2lf", tab->linear[i][j]);
-      }
+    // Print the header
+    printf("\n%d. Tableau %s:\n", ++counter, mes);
+    printf("--------------");
+    for (j = 0; j < tab->n; j++) {
+        printf("-------------");
+    }
     printf("\n");
-  }
-  nl(70);
+
+    printf("| %-10s |", "Row");
+    for (j = 0; j < tab->n; j++) {
+        if (j == 0)
+            printf(" %-10s |", "b[i]");
+        else
+            printf(" x%-9d |", j);
+    }
+    printf("\n--------------");
+    for (j = 0; j < tab->n; j++) {
+        printf("-------------");
+    }
+    printf("\n");
+
+    // Print each row of the tableau
+    for (i = 0; i < tab->m; i++) {
+        if (i == 0) {
+            printf("| %-10s |", "max");
+        } else {
+            printf("| b%-9d |", i);
+        }
+        for (j = 0; j < tab->n; j++) {
+            // Check if the value is an integer
+            if (equal((int)tab->linear[i][j], tab->linear[i][j])) {
+                printf(" %10d |", (int)tab->linear[i][j]);
+            } else {
+                // Print floating point number with scientific notation for large numbers
+                printf(" %10.2e |", tab->linear[i][j]);
+            }
+        }
+        printf("\n--------------");
+        for (j = 0; j < tab->n-1; j++) {
+            printf("-------------");
+        }
+        printf("-------------\n");
+    }
 }
+
+
+
 
 /* Example input file for read_tableau:
      4 5
@@ -165,13 +194,13 @@ int find_pivot_row(Tableau *tab, int pivot_col) {
   for(i=1;i<tab->m;i++){
   	if (i>1) printf(", ");
     double ratio = tab->linear[i][0] / tab->linear[i][pivot_col];
-    printf("%3.2lf", ratio);
+    // printf("%3.2lf", ratio);
     if ( (ratio > 0  && ratio < min_ratio ) || min_ratio < 0 ) {
       min_ratio = ratio;
       pivot_row = i;
     }
   }
-  printf("].\n");
+  // printf("].\n");
   if (min_ratio == -1)
     return -1; // Unbounded.
 //  printf("Found pivot A[%d,%d], min positive ratio=%g in row=%d.\n",
@@ -251,12 +280,16 @@ int find_basis_variable(Tableau *tab, int col) {
 void print_optimal_vector(Tableau *tab, char *message) {
   int j, xi;
   printf("%s at ", message);
+  printf(" [ ");
   for(j=1;j<tab->n;j++) { // for each column.
     xi = find_basis_variable(tab, j);
     if (xi != -1)
-      printf("x%d=%3.2lf, ", j, tab->linear[xi][0] );
+      if ( j < tab->n - 1) printf("x%d=%3.2lf, ", j, tab->linear[xi][0] );
+      else printf("x%d=%3.2lf ] ", j, tab->linear[xi][0] );
     else
-      printf("x%d=0, ", j);
+      if ( j < tab->n - 1) printf("x%d=0, ", j);
+      else printf(" x%d = 0 ]");
+      
   }
   printf("\n");
 } 
@@ -350,7 +383,7 @@ void infor(){
  	printf("\n        %c                     DE TAI: Toi uu tuyen tinh Simplex - Big_M              %c",4,4);
  	printf("\n        %c %86c",4,4);
  	printf("\n        %c       Sinh vien thuc hien:                       Giao vien huong dan:                %c",4,4);
- 	printf("\n        %c           %c Nguyen Dinh Duy                       %c Phan Thanh Tao                 %c",4,45,45,4);
+ 	printf("\n        %c           %c Nguyen Dinh Duy                       %c Nguyen Van Hieu                 %c",4,45,45,4);
  	printf("\n        %c           %c Tran Van Minh Tri  %60c",4,45,4);
  	printf("\n        %c %86c",4,4);
  	printf("\n        %c",200);
