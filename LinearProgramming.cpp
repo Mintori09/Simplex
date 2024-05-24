@@ -7,29 +7,28 @@
 
 #define M 20
 #define N 20
+#define MAX 10e8
 
 static const double epsilon = 1.0e-8;
 int equal(double a, double b) { return fabs(a-b) < epsilon; }
-#define MAX 10e8
-
 typedef struct {
   int m, n; // m=rows, n=columns, linear[m x n]
   double linear[M][N];
   int sign[M];
 } Tableau;
 
-
-//Ham in mau
-//void setcolor(int backgound_color, int text_color);
-
 //Ham gioi thieu
 void infor();
 //Ham menu yeu cau dau vao
-void menuin(float &com);
+bool menuin();
 //Ham menu yeu cau file muon nhap
-void menuFILE(float &v);
+void menuFILE(Tableau *tab);
 //Ham nhap file da chon
-void Nhapfile(float *a, int &n, int v);
+int getCurrentY();
+void gotoxy(int x, int y);
+void islet(Tableau *tab);
+void filein(float *a, int &n, int v);
+void print_problem(Tableau *tab);
 void print_tableau(Tableau *tab, const char* mes);
 void read_tableau(Tableau *tab, const char * filename);
 void pivot_on(Tableau *tab, int row, int col);
@@ -38,29 +37,63 @@ int find_pivot_row(Tableau *tab, int pivot_col);
 void add_slack_variables(Tableau *tab);
 void big_M(Tableau* tab);
 int find_basis_variable(Tableau *tab, int col);
-void print_optimal_vector(Tableau *tab, char *message);
+void print_optimal_vector(Tableau *tab, char *message, float matrix[]);
 void simplex(Tableau *tab);
 void nl(int k);
 
-Tableau tab  = { 3, 3, {                     
-    {  0.0 , -3.0 , -2.0,   },  
-    { 9.0 ,  2.0 ,  1.0 ,   }, 
-    { 9.0 , 1.0 , 2.0 ,   }, 
+
+Tableau tab  = { 5, 3, {                     
+    {  0.0 , -3, -4,   },  
+    { 600.0 ,  2.0 ,  1.0 ,   }, 
+    { 225 , 1.0 , 1.0 ,   }, 
+    {1000.0, 5.0,4.0},
+    {150.0,1.0,2.0},
+    {0.0,1.0,1.0}
   },
-  { -1 , 1 , 1 }
+  { 0 , -1 , -1, -1,1,1 }
 //  0 : equal; -1 : smaller or equal; 1 : bigger or equal
 };
 
 int main(int argc, char *argv[]){
+  while (1){
     infor(); //Gioi thieu
     if (argc > 1) { // usage: cmd datafile
        read_tableau(&tab, argv[1]);
     }
-    print_tableau(&tab,"Initial");
+    if(menuin()) 
+        menuFILE(&tab); 
+    else islet(&tab);
+
     simplex(&tab);
+    printf("Nhan Enter de tiep tuc: ");
+    getchar();
+    getchar();
+    system("cls");
+  }
+  
     return 0;
 } 
+
 void nl(int k){ int j; for(j=0;j<k;j++) putchar('-'); putchar('\n'); }
+
+void islet(Tableau *tab){
+  printf("Enter rows : "); scanf("%d", &tab->m);
+  printf("Enter columns : "); scanf("%d", &tab->n);
+  for (int i = 0; i < tab->m; i++){
+    for (int j = 0; j < tab->n; j++){
+      if ( (i == 0) && (j == 0) ) { printf("Enter Max: "); tab->linear[i][j] = 0; continue; }
+      if ( i == 0 ) { scanf("%d", &tab->linear[i][j]); continue; }
+      if ( j == 0 ) printf("Enter row %d: ", i); 
+      scanf("%d ", &tab->linear[i][j]);
+    }
+  }
+  printf("Enter sign: \n'-1' : bigger or equal\n '0' : equal\n '1' : smaller or equal\n" );
+  tab->sign[0] = 0;
+  for (int i = 1; i < tab->m; i++){
+    printf("Row %d: ", i );
+    scanf("%d", tab->sign[i]);
+  }
+}
 void print_tableau(Tableau *tab, const char* mes) {
     static int counter = 0;
     int i, j;
@@ -120,6 +153,7 @@ void print_tableau(Tableau *tab, const char* mes) {
      10   -2    -1  1   1 
      10    0     1  0  -1  
      0	   -1    0  1   0
+     0 0 0 0 
 */
 void read_tableau(Tableau *tab, const char * filename) {
   int err, i, j;
@@ -127,24 +161,27 @@ void read_tableau(Tableau *tab, const char * filename) {
 
   fp  = fopen(filename, "r" );
   if( !fp ) {
-    printf("Cannot read %s\n", filename); exit(1);
+    printf("Cannot read %s\n", filename); return;;
   }
   memset(tab, 0, sizeof(*tab));
   err = fscanf(fp, "%d %d", &tab->m, &tab->n);
   if (err == 0 || err == EOF) {
-    printf("Cannot read m or n\n"); exit(1);
+    printf("Cannot read m or n\n"); return;;
   }
   for(i=0;i<tab->m; i++) {
     for(j=0;j<tab->n; j++) {
       err = fscanf(fp, "%lf", &tab->linear[i][j]);
       if (err == 0 || err == EOF) {
-        printf("Cannot read A[%d][%d]\n", i, j); exit(1);
+        printf("Cannot read \n", i, j); return;;
       }
     }
   }
-  
-  printf("Read tableau [%d rows x %d columns] from file '%s'.\n",
-    tab->m, tab->n, filename);
+    for(i=0;i<tab->m; i++) {
+      err = fscanf(fp, "%d", &tab->sign[i]);
+      if (err == 0 || err == EOF) {
+        printf("Cannot read\n", i, j); return;;
+      } 
+  }
   fclose(fp);
 }
 
@@ -243,7 +280,7 @@ void big_M(Tableau* tab){
 		if (tab->linear[0][i] == MAX){
 			for (int j = 1; j < tab->m; j++){
 				if (tab->linear[j][i]==1){
-					for (int k = 1; k<tab->n; k++){
+					for (int k = 0; k<tab->n; k++){
 						tab->linear[0][k] += (-1)*MAX*tab->linear[j][k];
 					}
 				}
@@ -277,24 +314,61 @@ int find_basis_variable(Tableau *tab, int col) {
   return xi;
 }
 
-void print_optimal_vector(Tableau *tab, char *message) {
+void print_optimal_vector(Tableau *tab, char *message, float matrix[]) {
+    FILE * fp;
+    fp  = fopen("Optimal.txt", "w" );
+    if( !fp ) {
+    printf("Cannot write \n"); 
+    exit(1);
+    }
+  // int length = sizeof(tab->sign) / sizeof(int);
+  int cnt = 0, a;
+  for (int i = 0; i<(sizeof(tab->sign) / sizeof(int)); i++){
+    if (tab->sign[i] != 0) cnt++;
+    if (tab->sign[i] == 1) a = 1;
+  }
+  if (a == 1) cnt++;
+  cnt = tab->n - cnt;
   int j, xi;
-  printf("%s at ", message);
-  printf(" [ ");
+  double S;
+  printf("%s at [", message);
+  fprintf(fp, "%s at [", message);
   for(j=1;j<tab->n;j++) { // for each column.
     xi = find_basis_variable(tab, j);
-    if (xi != -1)
-      if ( j < tab->n - 1) printf("x%d=%3.2lf, ", j, tab->linear[xi][0] );
-      else printf("x%d=%3.2lf ] ", j, tab->linear[xi][0] );
+    if (xi != -1){
+      if ( j < tab->n - 1) {
+	       printf("x%d=%3.2lf, ", j, tab->linear[xi][0] );
+	       fprintf(fp,"x%d=%3.2lf, ", j, tab->linear[xi][0]  );
+	   }
+      else {
+	       printf("x%d=%3.2lf ] ", j, tab->linear[xi][0] );
+	       fprintf(fp,"x%d=%3.2lf ] ", j, tab->linear[xi][0] );
+	   }
+      if (j<=cnt) S += tab->linear[xi][0]*matrix[j];
+      }
     else
-      if ( j < tab->n - 1) printf("x%d=0, ", j);
-      else printf(" x%d = 0 ]");
-      
+      if ( j < tab->n - 1) {
+	      printf("x%d=0, ", j);
+	      fprintf(fp, "x%d=0, ", j);
+	  }
+      else {
+	      printf(" x%d = 0 ]");
+	      fprintf(fp," x%d = 0 ]");
+	}
   }
-  printf("\n");
+  printf("\nMaximum: %.2lf\n", S);
+  fprintf(fp, "\nMaximum: %.2lf\n", S);
+  fclose(fp);
 } 
 
 void simplex(Tableau *tab) {
+  system("cls");
+  float matrix[10];
+  for (int i = 1; i <= tab->n; i++){
+    matrix[i] = -tab->linear[0][i]; 
+  }
+  print_problem(tab);
+  print_tableau(tab,"Initial");
   int loop=0;
   add_slack_variables(tab);
   check_b_positive(tab);
@@ -307,7 +381,7 @@ void simplex(Tableau *tab) {
     if( pivot_col < 0 ) {
 //      printf("Found optimal value=A[0,0]=%3.2lf (no negatives in row 0).\n",
 //        tab->linear[0][0]);
-      print_optimal_vector(tab, "Optimal vector");
+      print_optimal_vector(tab, "Optimal vector", matrix);
       break;
     }
 //    printf("Entering variable x%d to be made basic, so pivot_col=%d.\n",
@@ -329,34 +403,12 @@ void simplex(Tableau *tab) {
       break;
     }
   }
+   
 }
 
-void Nhapfile(float *a, int &n, int v){
-	FILE *fi;
-    if(v==1)fi=fopen("TEST1.txt","r");
-    if(v==2)fi=fopen("TEST2.txt","r");
-	if(v==3)fi=fopen("TEST3.txt","r");
-	if(v==4)fi=fopen("TEST4.txt","r");
-	if(v==5)fi=fopen("TEST5.txt","r");
-	if(v==6)fi=fopen("TEST6.txt","r");
-	if(v==7)fi=fopen("TEST7.txt","r");
-	if(v==8)fi=fopen("TEST8.txt","r");
-	if(v==9)fi=fopen("TEST9.txt","r");
-	if(v==10)fi=fopen("TEST10.txt","r");
-    printf("\nBac phuong trinh: ");
-    fscanf(fi,"%d", &n);
-    printf("%d", n);
-    printf("\nCac he so cua phuong trinh bac %d: ", n);
-    for(int i = 0 ; i <= n ; i++){
-        fscanf(fi,"%f", a+i);
-        if(*(a+i)==(int)(*(a+i))){
-            printf("%d ",(int)(*(a+i)));
-        }else printf("%f ",*(a+i));
-    }
-}
 //Ham menu yeu cau file muon nhap
-void menuFILE(float &v){
-//	setcolor(0,2);
+void menuFILE(Tableau *tab){
+    int v;
  	printf("\n                                  %c   CHON FILE DE LAY DU LIEU    %c\n",16,17);
  	printf("\n                           Nhan 1 : TEST1                 Nhan 2: TEST2 ");
 	printf("\n                           Nhan 3 : TEST3                 Nhan 4: TEST4 ");
@@ -364,28 +416,39 @@ void menuFILE(float &v){
 	printf("\n                           Nhan 7 : TEST7                 Nhan 8: TEST8 ");
 	printf("\n                           Nhan 9 : TEST9                 Nhan 10: TEST10");
 	printf("\n                                             -------\n");
-//	setcolor(0,8);
+
 	printf("\n          Nhap file test (1-10): ");
 	do{
-		scanf("%f", &v);
+		scanf("%d", &v);
 		if(v!=1 && v!=2 && v!=3 && v!=4 && v!=5 && v!=6 && v!=7 && v!=8 && v!=9 && v!=10) printf("\nMoi ban nhap lai so thu tu file: ");
 	}while(v!=1 && v!=2 && v!=3 && v!=4 && v!=5 && v!=6 && v!=7 && v!=8 && v!=9 && v!=10);
+    if(v==1) read_tableau(tab, "TEST1.txt");
+    if(v==2) read_tableau(tab, "TEST2.txt");
+	if(v==3) read_tableau(tab, "TEST3.txt");
+	if(v==4) read_tableau(tab, "TEST4.txt");
+	if(v==5) read_tableau(tab, "TEST5.txt");
+	if(v==6) read_tableau(tab, "TEST6.txt");
+	if(v==7) read_tableau(tab, "TEST7.txt");
+	if(v==8) read_tableau(tab, "TEST8.txt");
+	if(v==9) read_tableau(tab, "TEST9.txt");
+	if(v==10) read_tableau(tab, "TEST10.txt");
 }
+
 
 void infor(){
  	int i;
-// 	setcolor(0,9);
+	// setcolor(0,9);
  	printf("\n%9c",201);
  	for (i=0;i<=85;i++) printf("%c",205);
  	printf("%c",187);
- 	printf("\n        %c %86c",4,4);
- 	printf("\n        %c                             DO AN LAP TRINH TINH TOAN                                %c",4,4);
- 	printf("\n        %c                     DE TAI: Toi uu tuyen tinh Simplex - Big_M              %c",4,4);
- 	printf("\n        %c %86c",4,4);
- 	printf("\n        %c       Sinh vien thuc hien:                       Giao vien huong dan:                %c",4,4);
- 	printf("\n        %c           %c Nguyen Dinh Duy                       %c Nguyen Van Hieu                 %c",4,45,45,4);
- 	printf("\n        %c           %c Tran Van Minh Tri  %60c",4,45,4);
- 	printf("\n        %c %86c",4,4);
+ 	printf("\n        %c %86c",186,186);
+ 	printf("\n        %c                             DO AN LAP TRINH TINH TOAN                                %c",186,186);
+ 	printf("\n        %c                     DE TAI: Toi uu tuyen tinh Simplex - Big_M                        %c",186,186);
+ 	printf("\n        %c %86c",186,186);
+ 	printf("\n        %c           Sinh vien thuc hien:                   Giao vien huong dan:                %c",186,186);
+ 	printf("\n        %c           %c Nguyen Dinh Duy                       %c Nguyen Van Hieu                  %c",186,45,45,186);
+ 	printf("\n        %c           %c Tran Van Minh Tri  %55c",186,45,186);
+ 	printf("\n        %c %86c",186,186);
  	printf("\n        %c",200);
  	for (i=0;i<=85;i++) printf("%c",205);
  	printf("%c\n",188);
@@ -398,19 +461,76 @@ void infor(){
 //    SetConsoleTextAttribute(hStdout, color_code);
 //}
 
-void menuin(float &com){
-//    setcolor(0,14);
- 	printf("\n                                  %c   CHON CACH NHAP DU LIEU   %c\n",16,17);
- 	printf("\n                                        Nhap 1: Tu ban phim");
-	printf("\n                                        Nhap 2: Tu file");
-	printf("\n                                    Nhan phim bat ky de Ket thuc");
-	printf("\n                                             -------\n");
-//	setcolor(0,8);
-	printf("\n          Nhap yeu cau: ");
-	do{
-		scanf("%f", &com);
-		if(com != 1 && com != 2) printf("\nMoi ban nhap lai: ");
-	}while(com != 1 && com != 2);
+bool menuin() {
+    int com;
+    printf("\n                                  %c   CHON CACH NHAP DU LIEU   %c\n", 16, 17);
+    printf("\n                                        Nhap 1: Tu ban phim");
+    printf("\n                                        Nhap 2: Tu file");
+    printf("\n                                    Nhan phim bat ky de Ket thuc");
+    printf("\n                                             -------\n");
+    printf("\n          Nhap yeu cau: ");
+    do {
+        scanf("%d", &com);
+        if (com != 1 && com != 2) printf("\nMoi ban nhap lai: ");
+    } while (com != 1 && com != 2);
+    if (com == 1) return false; // from keyboard 0
+    return true; // from file 1
 }
 
+void print_problem(Tableau* tab) {
+  // Calculate the maximum width of coefficients and objective function terms
+  // Top border with title
+  printf("+--------------------------------------------------+\n");
+  printf("|                   Problem:                       |\n");
+  printf("+--------------------------------------------------+\n");
+
+  // Objective Function
+  printf("| Maximize: ");
+  for (int j = 1; j < tab->n; ++j) {
+    if (j > 1) {
+      printf(tab->linear[0][j] > 0 ? " + " : " - ");
+    }
+    printf("%.2fx%d ", fabs(tab->linear[0][j]), j);
+  }
+  gotoxy(51,getCurrentY());
+  printf("|\n+--------------------------------------------------+\n| Conditions:");
+  gotoxy(51,getCurrentY()); printf("|\n");
+  // Constraints
+  for (int i = 1; i < tab->m; ++i) {
+    printf("| ");
+    for (int j = 1; j < tab->n; ++j) {
+      if (j > 1) {
+        printf(tab->linear[i][j] > 0 ? " + " : " - ");
+      }
+      printf("%.2fx%d ", fabs(tab->linear[i][j]), j);
+    }
+    switch (tab->sign[i]) {
+      case 0:
+        printf("= %.2f", tab->linear[i][0]);
+        break;
+      case -1:
+        printf("<= %.2f ", tab->linear[i][0]);
+        break;
+      case 1:
+        printf(">= %.2f ", tab->linear[i][0]);
+        break;
+    }
+    gotoxy(51,getCurrentY());
+      printf("|\n");
+  }
+  printf("+--------------------------------------------------+\n");
+}
+
+
+int getCurrentY() {
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    return csbi.dwCursorPosition.Y;
+}
+void gotoxy(int x, int y) {
+    COORD coord;
+    coord.X = x;
+    coord.Y = y;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
 
