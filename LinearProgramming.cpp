@@ -41,18 +41,18 @@ void print_optimal_vector(Tableau *tab, char *message, float matrix[]);
 void simplex(Tableau *tab);
 void nl(int k);
 
-
-Tableau tab  = { 5, 3, {                     
-    {  0.0 , -3, -4,   },  
-    { 600.0 ,  2.0 ,  1.0 ,   }, 
-    { 225 , 1.0 , 1.0 ,   }, 
-    {1000.0, 5.0,4.0},
-    {150.0,1.0,2.0},
-    {0.0,1.0,1.0}
-  },
-  { 0 , -1 , -1, -1,1,1 }
-//  0 : equal; -1 : smaller or equal; 1 : bigger or equal
-};
+Tableau tab;
+//Tableau tab  = { 5, 3, {                     
+//    {  0.0 , -3, -4,   },  
+//    { 600.0 ,  2.0 ,  1.0 ,   }, 
+//    { 225 , 1.0 , 1.0 ,   }, 
+//    {1000.0, 5.0,4.0},
+//    {150.0,1.0,2.0},
+//    {0.0,1.0,1.0}
+//  },
+//  { 0 , -1 , -1, -1,1,1 }
+////  0 : equal; -1 : smaller or equal; 1 : bigger or equal
+//};
 
 int main(int argc, char *argv[]){
   while (1){
@@ -65,9 +65,7 @@ int main(int argc, char *argv[]){
     else islet(&tab);
 
     simplex(&tab);
-    printf("Nhan Enter de tiep tuc: ");
-    getchar();
-    getchar();
+    system("pause");
     system("cls");
   }
   
@@ -76,24 +74,31 @@ int main(int argc, char *argv[]){
 
 void nl(int k){ int j; for(j=0;j<k;j++) putchar('-'); putchar('\n'); }
 
-void islet(Tableau *tab){
-  printf("Enter rows : "); scanf("%d", &tab->m);
-  printf("Enter columns : "); scanf("%d", &tab->n);
-  for (int i = 0; i < tab->m; i++){
-    for (int j = 0; j < tab->n; j++){
-      if ( (i == 0) && (j == 0) ) { printf("Enter Max: "); tab->linear[i][j] = 0; continue; }
-      if ( i == 0 ) { scanf("%d", &tab->linear[i][j]); continue; }
-      if ( j == 0 ) printf("Enter row %d: ", i); 
-      scanf("%d ", &tab->linear[i][j]);
+void islet(Tableau *tab) {
+    int i, j;
+
+    // Nhập số hàng m và số cột n
+    printf("Nhap so hang m: ");
+    scanf("%d", &tab->m);
+    printf("Nhap so cot n: ");
+    scanf("%d", &tab->n);
+
+    // Nhập ma trận kích thước m x n
+    printf("Nhap cac dieu kien:\n");
+    for (i = 0; i < tab->m; i++) {
+        printf("Nhập hàng thứ %d: ", i + 1);
+        for (j = 0; j < tab->n; j++) {
+            scanf("%lf", &tab->linear[i][j]);
+        }
     }
-  }
-  printf("Enter sign: \n'-1' : bigger or equal\n '0' : equal\n '1' : smaller or equal\n" );
-  tab->sign[0] = 0;
-  for (int i = 1; i < tab->m; i++){
-    printf("Row %d: ", i );
-    scanf("%d", tab->sign[i]);
-  }
+    // Nhập mảng dấu kích thước m
+    printf("Nhập các giá trị của mảng dấu:\n");
+    for (i = 0; i < tab->m; i++) {
+        printf("Nhập dấu thứ %d: ", i + 1);
+        scanf(" %d", &tab->sign[i]);
+    }
 }
+
 void print_tableau(Tableau *tab, const char* mes) {
     static int counter = 0;
     int i, j;
@@ -487,6 +492,10 @@ void print_problem(Tableau* tab) {
   // Objective Function
   printf("| Maximize: ");
   for (int j = 1; j < tab->n; ++j) {
+    if (j == 1) {
+      printf("%.2fx%d ", tab->linear[0][j], j);
+      continue;
+    }
     if (j > 1) {
       printf(tab->linear[0][j] > 0 ? " + " : " - ");
     }
