@@ -75,26 +75,30 @@ int main(int argc, char *argv[]){
 void nl(int k){ int j; for(j=0;j<k;j++) putchar('-'); putchar('\n'); }
 
 void islet(Tableau *tab) {
+    system("cls");
     int i, j;
-
-    // Nhập số hàng m và số cột n
+    gotoxy(5,2);
+    // Enter row m, col n
     printf("Nhap so hang m: ");
     scanf("%d", &tab->m);
+    gotoxy(5,getCurrentY());
     printf("Nhap so cot n: ");
     scanf("%d", &tab->n);
-
-    // Nhập ma trận kích thước m x n
+    gotoxy(5,getCurrentY());
+    // NEnter matrix size m x n
     printf("Nhap cac dieu kien:\n");
     for (i = 0; i < tab->m; i++) {
-        printf("Nhập hàng thứ %d: ", i + 1);
+        gotoxy(8,getCurrentY());
+        printf("Nhap hang thu %d: ", i + 1);
         for (j = 0; j < tab->n; j++) {
             scanf("%lf", &tab->linear[i][j]);
         }
     }
-    // Nhập mảng dấu kích thước m
-    printf("Nhập các giá trị của mảng dấu:\n");
+    // Enter array size n
+    printf("Nhap dau cua cac dieu kien\n\t-1: <=\n\t0: =\n\t1: >=\n");
     for (i = 0; i < tab->m; i++) {
-        printf("Nhập dấu thứ %d: ", i + 1);
+        gotoxy(5,getCurrentY());
+        printf("Nhap dau cua hang thu %d: ", i + 1);
         scanf(" %d", &tab->sign[i]);
     }
 }
@@ -357,8 +361,8 @@ void print_optimal_vector(Tableau *tab, char *message, float matrix[]) {
 	      fprintf(fp, "x%d=0, ", j);
 	  }
       else {
-	      printf(" x%d = 0 ]");
-	      fprintf(fp," x%d = 0 ]");
+	      printf(" x%d = 0 ]", j);
+	      fprintf(fp," x%d = 0 ]", j);
 	}
   }
   printf("\nMaximum: %.2lf\n", S);
@@ -384,25 +388,16 @@ void simplex(Tableau *tab) {
 
     pivot_col = find_pivot_column(tab);
     if( pivot_col < 0 ) {
-//      printf("Found optimal value=A[0,0]=%3.2lf (no negatives in row 0).\n",
-//        tab->linear[0][0]);
       print_optimal_vector(tab, "Optimal vector", matrix);
       break;
     }
-//    printf("Entering variable x%d to be made basic, so pivot_col=%d.\n",
-//      pivot_col, pivot_col);
-
     pivot_row = find_pivot_row(tab, pivot_col);
     if (pivot_row < 0) {
       printf("unbounded (no pivot_row).\n");
       break;
     }
-//    printf("Leaving variable x%d, so pivot_row=%d\n", pivot_row, pivot_row);
-
     pivot_on(tab, pivot_row, pivot_col);
     print_tableau(tab,"After pivoting");
-//    print_optimal_vector(tab, "Basic feasible solution");
-
     if(loop > 20) {
       printf("Too many iterations > %d.\n", loop);
       break;
@@ -413,16 +408,20 @@ void simplex(Tableau *tab) {
 
 //Ham menu yeu cau file muon nhap
 void menuFILE(Tableau *tab){
+    system("cls");
     int v;
- 	printf("\n                                  %c   CHON FILE DE LAY DU LIEU    %c\n",16,17);
- 	printf("\n                           Nhan 1 : TEST1                 Nhan 2: TEST2 ");
-	printf("\n                           Nhan 3 : TEST3                 Nhan 4: TEST4 ");
-	printf("\n                           Nhan 5 : TEST5                 Nhan 6: TEST6 ");
-	printf("\n                           Nhan 7 : TEST7                 Nhan 8: TEST8 ");
-	printf("\n                           Nhan 9 : TEST9                 Nhan 10: TEST10");
-	printf("\n                                             -------\n");
-
-	printf("\n          Nhap file test (1-10): ");
+    printf("\n\t\t+------------------------------------------------------------------------+\n");
+    printf("\t\t|                                                                        |\n");
+    printf("\t\t|                    %c   CHON FILE DE LAY DU LIEU    %c                     |\n", 16, 17);
+    printf("\t\t|                                                                        |\n");
+    printf("\t\t|             Nhan 1 : TEST1                 Nhan 2: TEST2               |\n");
+    printf("\t\t|             Nhan 3 : TEST3                 Nhan 4: TEST4               |\n");
+    printf("\t\t|             Nhan 5 : TEST5                 Nhan 6: TEST6               |\n");
+    printf("\t\t|             Nhan 7 : TEST7                 Nhan 8: TEST8               |\n");
+    printf("\t\t|             Nhan 9 : TEST9                 Nhan 10: TEST10             |\n");
+    printf("\t\t|                                                                        |\n");
+    printf("\t\t+------------------------------------------------------------------------+\n");
+    printf("\n\t\t          Nhap file test (1-10): ");
 	do{
 		scanf("%d", &v);
 		if(v!=1 && v!=2 && v!=3 && v!=4 && v!=5 && v!=6 && v!=7 && v!=8 && v!=9 && v!=10) printf("\nMoi ban nhap lai so thu tu file: ");
