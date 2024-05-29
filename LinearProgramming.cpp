@@ -32,7 +32,7 @@ void islet(Tableau *tab);
 // file _ in
 void filein(float *a, int &n, int v);
 // print problem
-void print_problem(Tableau *tab, int *select);
+void print_problem(Tableau *tab);
 // 
 void print_tableau(Tableau *tab, const char* mes);
 // read file
@@ -53,7 +53,7 @@ void print_optimal_vector(Tableau *tab, char *message, float matrix[]);
 void simplex(Tableau *tab);
 void nl(int k);
 
-Tableau tab;
+
 //Tableau tab  = { 5, 3, {                     
 //    {  0.0 , -3, -4,   },  
 //    { 600.0 ,  2.0 ,  1.0 ,   }, 
@@ -67,21 +67,21 @@ Tableau tab;
 //};
 
 int main(int argc, char *argv[]){
-  while (1){
-    infor(); 
-    if (argc > 1) { // usage: cmd datafile
-       read_tableau(&tab, argv[1]);
-    }
-    if(menuin()) 
-        menuFILE(&tab); 
-    else islet(&tab);
+  int t=1;
+  while (t){
+    Tableau tab = {0};
+    if (t==1) infor(); 
+    int a = menuin();
+    if(a) menuFILE(&tab); 
+    else if (!a) {  islet(&tab); }
 
     simplex(&tab);
     system("pause");
     system("cls");
-  }
-  
-    return 0;
+    getchar();
+    t++;
+  } 
+  return 0;
 } 
 
 void nl(int k){ int j; for(j=0;j<k;j++) putchar('-'); putchar('\n'); }
@@ -112,7 +112,8 @@ void islet(Tableau *tab) {
         }
     }
     // Enter array size n
-    printf("Nhap dau cua cac dieu kien\n\t-1: <=\n\t0: =\n\t1: >=\n");
+    gotoxy(5,getCurrentY());
+    printf("Nhap dau cua cac rang buoc\n\t-1: <=\n\t0: =\n\t1: >=\n");
     tab->sign[0] = 0;
     for (i = 1; i < tab->m; i++) {
         gotoxy(5,getCurrentY());
@@ -136,7 +137,7 @@ void print_tableau(Tableau *tab, const char* mes) {
     printf("| %-10s |", "Row");
     for (j = 0; j < tab->n; j++) {
         if (j == 0)
-            printf(" %-10s |", "b[i]");
+            printf(" %-10s |", "Z");
         else
             printf(" x%-9d |", j);
     }
@@ -228,7 +229,6 @@ void pivot_on(Tableau *tab, int row, int col) {
   }
 }
 
-// Most positive 
 int find_pivot_column(Tableau *tab) {
   int j, pivot_col = 1;
   double lowest = tab->linear[0][pivot_col];
@@ -248,7 +248,7 @@ int find_pivot_row(Tableau *tab, int pivot_col) {
   int i, pivot_row = 0;
   double min_ratio = -1;
   for(i=1;i<tab->m;i++){
-  	if (i>1) printf(", ");
+
     double ratio = tab->linear[i][0] / tab->linear[i][pivot_col];
     if ( (ratio > 0  && ratio < min_ratio ) || min_ratio < 0 ) {
       min_ratio = ratio;
@@ -350,8 +350,8 @@ void print_optimal_vector(Tableau *tab, char *message, float matrix[]) {
   cnt = tab->n - cnt;
   int j, xi;
   double S;
-  printf("%s at [", message);
-  fprintf(fp, "%s at [", message);
+  printf("%s la [", message);
+  fprintf(fp, "%s la [", message);
   for(j=1;j<tab->n;j++) { // for each column.
     xi = find_basis_variable(tab, j);
     if (xi != -1){
@@ -375,31 +375,38 @@ void print_optimal_vector(Tableau *tab, char *message, float matrix[]) {
 	      fprintf(fp," x%d = 0 ]", j);
 	}
   }
-  printf("\nMaximum: %.2lf\n", S);
-  fprintf(fp, "\nMaximum: %.2lf\n", S);
+  printf("\nGia tri lon nhat: %.2lf\n", S);
+  fprintf(fp, "\nGia tri lon nhat: %.2lf\n", S);
   fclose(fp);
+    gotoxy(5,getCurrentY());
+    printf("Ban co muon tiep tuc (Y/N) ? ");
+    char choice;
+    gotoxy(5,getCurrentY());
+    scanf("%c", &choice);
+    if (choice == 'N' || choice == 'n') {
+      exit(1);
+    }
 } 
 
 void simplex(Tableau *tab) {
-  int select;
   system("cls");
   float matrix[10];
-  print_problem(tab, &select);
+  print_problem(tab);
   for (int i = 1; i <= tab->n; i++){
     matrix[i] = tab->linear[0][i]; 
   }
-  print_tableau(tab,"Initial");
+  print_tableau(tab,"Khoi tao");
   int loop=0;
   add_slack_variables(tab);
   check_b_positive(tab);
-  print_tableau(tab,"Padded with slack variables");
+  print_tableau(tab,"Them bien");
   big_M(tab);
   while( ++loop ) {
     int pivot_col, pivot_row;
 
     pivot_col = find_pivot_column(tab);
     if( pivot_col < 0 ) {
-      print_optimal_vector(tab, "Optimal vector", matrix);
+    print_optimal_vector(tab, "Gia tri toi uu ", matrix);
       break;
     }
     pivot_row = find_pivot_row(tab, pivot_col);
@@ -408,9 +415,9 @@ void simplex(Tableau *tab) {
       break;
     }
     pivot_on(tab, pivot_row, pivot_col);
-    print_tableau(tab,"After pivoting");
+    print_tableau(tab," ");
     if(loop > 20) {
-      printf("Too many iterations > %d.\n", loop);
+      printf("Qua nhieu vong lap > %d.\n", loop);
       break;
     }
   }
@@ -469,34 +476,26 @@ void infor(){
  	printf("%c\n",188);
 }
 
-////Ham in mau
-//void setcolor(int backgound_color, int text_color){
-//    HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-//    int color_code = backgound_color * 16 + text_color;
-//    SetConsoleTextAttribute(hStdout, color_code);
-//}
-
 bool menuin() {
-    int com;
+    char com;
+    do {
+    system("cls");
     printf("\n                                  %c   CHON CACH NHAP DU LIEU   %c\n", 16, 17);
     printf("\n                                        Nhap 1: Tu ban phim");
     printf("\n                                        Nhap 2: Tu file");
-    printf("\n                                    Nhan phim bat ky de Ket thuc");
     printf("\n                                             -------\n");
-    printf("\n          Nhap yeu cau: ");
-    do {
-        scanf("%d", &com);
-        if (com != 1 && com != 2) printf("\nMoi ban nhap lai: ");
-    } while (com != 1 && com != 2);
-    if (com == 1) return false; // from keyboard 0
+    printf("\n          Nhap yeu cau: ");     
+        scanf("%c", &com);
+        if (com != '1' && com != '2') printf("\n                   Moi ban nhap lai: ");
+    } while (com != '1' && com != '2');
+    if (com == '1') return false; // from keyboard 0
     return true; // from file 1
 }
 
-void print_problem(Tableau* tab, int *select) {
-
+void print_problem(Tableau* tab) {
         printf("+--------------------------------------------------+\n");   
     // Objective Function
-    printf("| Problem : ");
+    printf("| Cuc dai : ");
     for (int j = 1; j < tab->n; ++j) {
         if (j == 1) {
             printf("%.2fx%d ", tab->linear[0][j], j);
@@ -518,8 +517,10 @@ void print_problem(Tableau* tab, int *select) {
         for (int j = 1; j < tab->n; ++j) {
             if (j > 1) {
                 printf(tab->linear[i][j] > 0 ? " + " : " - ");
+                printf("%.2fx%d ", fabs(tab->linear[i][j]), j);
+                continue;
             }
-            printf("%.2fx%d ", fabs(tab->linear[i][j]), j);
+            else printf("%.2fx%d ", tab->linear[i][j], j);
         }
         switch (tab->sign[i]) {
             case 0:
@@ -534,41 +535,14 @@ void print_problem(Tableau* tab, int *select) {
         }
         gotoxy(51, getCurrentY());
         printf("|\n");
+        printf("+--------------------------------------------------+\n");
         
     }
-    printf("+--------------------------------------------------+\n\n\n");
-    printf("***********************\n");
-    printf("* Ban muon tinh gi?   *\n");
-    printf("*                     *\n");
-    printf("* 1. Max              *\n");
-    printf("* 2. Min              *\n");
-    printf("***********************\n");
-        do {
-        // Print prompt
-
-        printf("Chon: ");
-        
-        // Read user input
-        scanf("%d", select);
-        
-        // Check if input is valid
-        if (*select != 1 && *select != 2) {
-
-            printf("Vui long nhap lai: ");
-        }
-    } while (*select != 1 && *select != 2);
-    // Xoá menu đã hiển thị
-    printf("\033[9A"); // Di chuyển lên 5 dòng
-    printf("\033[9J"); // Xoá từ dòng hiện tại đến dòng trước đó
     printf("\n");
-    if (*select == 1) printf("Max: \n");
-    else printf("Min: \n");
-    if (*select == 1) {
-        // Assuming tab is a pointer to a struct with member n and linear
-        for (int i = 1; i < tab->n; i++) {
-            tab->linear[0][i] = tab->linear[0][i] * (-1);
-        }
-    } 
+    printf("Giai : \n");
+    for (int i = 1; i <= tab->m; i++){
+        tab->linear[0][i] = -tab->linear[0][i];
+    }
 }
 
 
