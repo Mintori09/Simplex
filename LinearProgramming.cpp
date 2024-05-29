@@ -70,7 +70,8 @@ int main(int argc, char *argv[]){
   int t=1;
   while (t){
     Tableau tab = {0};
-    if (t==1) infor(); 
+    if (t==1) infor();
+    getchar(); 
     int a = menuin();
     if(a) menuFILE(&tab); 
     else if (!a) {  islet(&tab); }
@@ -493,7 +494,7 @@ bool menuin() {
 }
 
 void print_problem(Tableau* tab) {
-        printf("+--------------------------------------------------+\n");   
+        printf("+------------------------------------------------------------+\n");   
     // Objective Function
     printf("| Cuc dai : ");
     for (int j = 1; j < tab->n; ++j) {
@@ -506,9 +507,9 @@ void print_problem(Tableau* tab) {
         }
         printf("%.2fx%d ", fabs(tab->linear[0][j]), j);
     }
-    gotoxy(51, getCurrentY());
-    printf("|\n+--------------------------------------------------+\n| Conditions:");
-    gotoxy(51, getCurrentY());
+    gotoxy(61, getCurrentY());
+    printf("|\n+------------------------------------------------------------+\n| Conditions:");
+    gotoxy(61, getCurrentY());
     printf("|\n");
     
     // Constraints
@@ -533,9 +534,9 @@ void print_problem(Tableau* tab) {
                 printf(">= %.2f ", tab->linear[i][0]);
                 break;
         }
-        gotoxy(51, getCurrentY());
+        gotoxy(61, getCurrentY());
         printf("|\n");
-        printf("+--------------------------------------------------+\n");
+        printf("+------------------------------------------------------------+\n");
         
     }
     printf("\n");
